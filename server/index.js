@@ -1,6 +1,7 @@
-/* eslint-disable no-console */
-/* eslint-disable radix */
+/* eslint-disable no-plusplus */
 const express = require('express');
+const { graphqlHTTP } = require('express-graphql');
+const { buildSchema } = require('graphql');
 const bodyParser = require('body-parser');
 const path = require('path');
 const cors = require('cors');
@@ -9,11 +10,47 @@ const db = require('../db/index.js');
 const app = express();
 const port = 3003;
 
+const schema = buildSchema(
+  `
+  type Query {
+    rollDice(numDice: Int!, numSides: Int): [Int]
+  }
+  `,
+);
+
+const root = {
+  rollDice: (args) => {
+    const output = [];
+    for (let i = 0; i < args.numDice; i++) {
+      output.push(1 + Math.floor(Math.random() * (args.numSides || 6)));
+    }
+    return output;
+  },
+};
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.use(express.static(path.join(__dirname, '../public')));
 app.use(cors());
+
+app.use('/graphql', graphqlHTTP({
+  schema,
+  rootValue: root,
+  graphiql: true,
+}));
+
+// Request using Postman:
+
+// QUERY:
+//   query($dice: Int!, $sides: Int!){
+//     rollDice(numDice: $dice, numSides: $sides)
+//   }
+// GRAPHQL VARIABLES:
+// {
+//   "dice": 7,
+//   "sides": 42
+// }
+app.use(express.static(path.join(__dirname, '../public')));
 
 app.get('/:courseNumber', (req, res) => {
   res.sendFile(path.resolve(__dirname, '../public/index.html'));

@@ -1,22 +1,15 @@
 /* eslint-disable no-plusplus */
 const express = require('express');
 const { graphqlHTTP } = require('express-graphql');
-const { buildSchema } = require('graphql');
+
 const bodyParser = require('body-parser');
 const path = require('path');
 const cors = require('cors');
 const db = require('../db/index.js');
+const schema = require('./graphQLSchema');
 
 const app = express();
 const port = 3003;
-
-const schema = buildSchema(
-  `
-  type Query {
-    rollDice(numDice: Int!, numSides: Int): [Int]
-  }
-  `,
-);
 
 const root = {
   rollDice: ({ numDice, numSides }) => {
